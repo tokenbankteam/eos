@@ -45,11 +45,16 @@ namespace eosio {
 
 namespace chain_apis {
 struct empty{};
+struct action {
+    name contract_name;
+    name action_name;
+};
 
 struct permission {
    name              perm_name;
    name              parent;
    authority         required_auth;
+   vector<action>    bind_actions;
 };
 
 template<typename>
@@ -159,7 +164,9 @@ public:
 
    struct get_account_params {
       name             account_name;
+      optional<bool> get_bind_action;
       optional<symbol> expected_core_symbol;
+
    };
    get_account_results get_account( const get_account_params& params )const;
 
@@ -726,7 +733,8 @@ private:
 
 }
 
-FC_REFLECT( eosio::chain_apis::permission, (perm_name)(parent)(required_auth) )
+FC_REFLECT( eosio::chain_apis::action, (contract_name)(action_name))
+FC_REFLECT( eosio::chain_apis::permission, (perm_name)(parent)(required_auth)(bind_actions))
 FC_REFLECT(eosio::chain_apis::empty, )
 FC_REFLECT(eosio::chain_apis::read_only::get_info_results,
 (server_version)(chain_id)(head_block_num)(last_irreversible_block_num)(last_irreversible_block_id)(head_block_id)(head_block_time)(head_block_producer)(virtual_block_cpu_limit)(virtual_block_net_limit)(block_cpu_limit)(block_net_limit)(server_version_string)(fork_db_head_block_num)(fork_db_head_block_id) )
@@ -765,7 +773,7 @@ FC_REFLECT( eosio::chain_apis::read_only::get_account_results,
 FC_REFLECT( eosio::chain_apis::read_only::get_code_results, (account_name)(code_hash)(wast)(wasm)(abi) )
 FC_REFLECT( eosio::chain_apis::read_only::get_code_hash_results, (account_name)(code_hash) )
 FC_REFLECT( eosio::chain_apis::read_only::get_abi_results, (account_name)(abi) )
-FC_REFLECT( eosio::chain_apis::read_only::get_account_params, (account_name)(expected_core_symbol) )
+FC_REFLECT( eosio::chain_apis::read_only::get_account_params, (account_name)(get_bind_action)(expected_core_symbol))
 FC_REFLECT( eosio::chain_apis::read_only::get_code_params, (account_name)(code_as_wasm) )
 FC_REFLECT( eosio::chain_apis::read_only::get_code_hash_params, (account_name) )
 FC_REFLECT( eosio::chain_apis::read_only::get_abi_params, (account_name) )

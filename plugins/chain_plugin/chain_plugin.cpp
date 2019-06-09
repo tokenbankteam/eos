@@ -2145,6 +2145,7 @@ read_only::get_account_results read_only::get_account( const get_account_params&
 
    const auto& permissions = d.get_index<permission_index,by_owner>();
    auto perm = permissions.lower_bound( boost::make_tuple( params.account_name ) );
+
    while( perm != permissions.end() && perm->owner == params.account_name ) {
       /// TODO: lookup perm->parent name
       name parent;
@@ -2157,10 +2158,43 @@ read_only::get_account_results read_only::get_account( const get_account_params&
             parent = p->name;
          }
       }
+      //elog("get link permission name: ${e}",("e",perm->name));
+      vector<action> actions;
+      if (params.get_bind_action) {
+         const auto& permission_links = d.get_index<permission_link_index, by_permission_name>();
+         auto link = permission_links.lower_bound(boost::make_tuple(perm->owner));
+         action act;
+         //elog("get link permission name: ${e}",("e",perm->name));
+         if (link == permission_links.end()) {
+            elog("link is empty");
+         }
 
-      result.permissions.push_back( permission{ perm->name, parent, perm->auth.to_authority() } );
+         while(link != permission_links.end()) {
+            //elog("link->account: ${e}",("e",link->account));
+            if(link->account != perm->owner){
+               break;
+            }
+           // elog("link->required_permission: ${e}",("e",link->required_permission));
+            if (link->required_permission != perm->name) {
+               ++link;
+               continue;
+            }
+
+            elog("contract name: ${e}",("e",link->code));
+            elog("action name: ${e}",("e",link->message_type));
+            act.contract_name = link->code;
+            act.action_name = link->message_type;
+            actions.push_back(act);
+            ++link;
+         }
+      }
+      elog("actions: ${e}",("e",actions));
+      result.permissions.push_back( permission{ perm->name, parent, perm->auth.to_authority(), actions} );
+      elog("result.permissions: ${e}",("e",result.permissions));
       ++perm;
    }
+
+  // elog("result: ${e}",("e",result));
 
    const auto& code_account = db.db().get<account_object,by_name>( config::system_account_name );
 
