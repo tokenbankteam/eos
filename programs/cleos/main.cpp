@@ -91,6 +91,7 @@ Options:
 #include <eosio/chain/wast_to_wasm.hpp>
 #include <eosio/chain/trace.hpp>
 #include <eosio/chain_plugin/chain_plugin.hpp>
+#include <eosio/permission_plugin/permission_plugin.hpp>
 #include <eosio/chain/contract_types.hpp>
 
 #pragma push_macro("N")
@@ -2049,7 +2050,67 @@ struct closerex_subcommand {
       });
    }
 };
+void get_permission( const string& accountName, bool json_format) {
+   fc::variant json;
+   json = call(get_permission_func,fc::mutable_variant_object("account_name", accountName));
 
+   auto res = json.as<eosio::permission_apis::permission_info::get_permission_results>();
+
+   if (!json_format) {
+      constexpr size_t indent_size = 5;
+      const string indent(indent_size, ' ');
+
+      std::cout << "permissions: " << std::endl;
+      unordered_map<name, vector<name>/*children*/> tree;
+      vector<name> roots; //we don't have multiple roots, but we can easily handle them here, so let's do it just in case
+      unordered_map<name, eosio::permission_apis::permission> cache;
+      for ( auto& perm : res.permissions ) {
+         if ( perm.parent ) {
+            tree[perm.parent].push_back( perm.perm_name );
+         } else {
+            roots.push_back( perm.perm_name );
+         }
+         auto name = perm.perm_name; //keep copy before moving `perm`, since thirst argument of emplace can be evaluated first
+         // looks a little crazy, but should be efficient
+         cache.insert( std::make_pair(name, std::move(perm)) );
+      }
+      std::function<void (account_name, int)> dfs_print = [&]( account_name name, int depth ) -> void {
+          auto& p = cache.at(name);
+          std::cout << indent << std::string(depth*3, ' ') << name << ' ' << std::setw(5) << p.required_auth.threshold << ":    ";
+          const char *sep = "";
+          for ( auto it = p.required_auth.keys.begin(); it != p.required_auth.keys.end(); ++it ) {
+             std::cout << sep << it->weight << ' ' << string(it->key);
+             sep = ", ";
+          }
+          for ( auto& acc : p.required_auth.accounts ) {
+             std::cout << sep << acc.weight << ' ' << string(acc.permission.actor) << '@' << string(acc.permission.permission);
+             sep = ", ";
+          }
+
+          for (auto& act : p.link_actions) {
+             std::cout << sep << string(act.contract_name) << "::"<< string(act.action_name);
+             sep = ", ";
+          }
+
+          std::cout << std::endl;
+          auto it = tree.find( name );
+          if (it != tree.end()) {
+             auto& children = it->second;
+             sort( children.begin(), children.end() );
+             for ( auto& n : children ) {
+                // we have a tree, not a graph, so no need to check for already visited nodes
+                dfs_print( n, depth+1 );
+             }
+          } // else it's a leaf node
+      };
+      std::sort(roots.begin(), roots.end());
+      for ( auto r : roots ) {
+         dfs_print( r, 0 );
+      }
+   }else{
+      std::cout << fc::json::to_pretty_string(json) << std::endl;
+   }
+}
 void get_account( const string& accountName, const string& coresym, bool json_format, bool get_bind_action ) {
    fc::variant json;
    if (coresym.empty()) {
@@ -2516,6 +2577,12 @@ int main( int argc, char** argv ) {
    getAccount->add_option("core-symbol", coresym, localized("The expected core symbol of the chain you are querying"));
    getAccount->add_flag("--json,-j", print_json, localized("Output in JSON format") );
    getAccount->set_callback([&]() { get_account(accountName, coresym, print_json,get_bind_action); });
+
+   // get permission
+   auto getPermission = get->add_subcommand("permission", localized("get the permission of account from the blockchain"), false);
+   getPermission->add_option("name", accountName, localized("The name of the account "))->required();
+   getPermission->add_flag("--json,-j", print_json, localized("Output in JSON format") );
+   getPermission->set_callback([&]() { get_permission(accountName, print_json);});
 
    // get code
    string codeFilename;

@@ -6,6 +6,7 @@
 
 #include <eosio/chain/types.hpp>
 #include <eosio/chain/permission_object.hpp>
+#include <eosio/chain/permission_link_object.hpp>
 #include <eosio/chain/snapshot.hpp>
 
 #include <utility>

@@ -103,6 +103,8 @@ namespace eosio { namespace client { namespace http {
    const string get_schedule_func = chain_func_base + "/get_producer_schedule";
    const string get_required_keys = chain_func_base + "/get_required_keys";
 
+   const string permission_func_base = "/v1/permission";
+   const string get_permission_func = permission_func_base + "/get_permission";
 
    const string history_func_base = "/v1/history";
    const string get_actions_func = history_func_base + "/get_actions";
