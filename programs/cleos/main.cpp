@@ -92,6 +92,7 @@ Options:
 #include <eosio/chain/trace.hpp>
 #include <eosio/chain_plugin/chain_plugin.hpp>
 #include <eosio/permission_plugin/permission_plugin.hpp>
+#include <eosio/info_plugin/info_plugin.hpp>
 #include <eosio/chain/contract_types.hpp>
 
 #pragma push_macro("N")
@@ -2050,6 +2051,7 @@ struct closerex_subcommand {
       });
    }
 };
+
 void get_permission( const string& accountName, bool json_format) {
    fc::variant json;
    json = call(get_permission_func,fc::mutable_variant_object("account_name", accountName));
@@ -2583,7 +2585,6 @@ int main( int argc, char** argv ) {
    getPermission->add_option("name", accountName, localized("The name of the account "))->required();
    getPermission->add_flag("--json,-j", print_json, localized("Output in JSON format") );
    getPermission->set_callback([&]() { get_permission(accountName, print_json);});
-
    // get code
    string codeFilename;
    string abiFilename;

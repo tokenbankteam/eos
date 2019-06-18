@@ -70,7 +70,9 @@ if(BUILD_MONGO_DB_PLUGIN)
   target_link_libraries( ${NODE_EXECUTABLE_NAME} PRIVATE -Wl,${whole_archive_flag} mongo_db_plugin -Wl,${no_whole_archive_flag} )
 endif()
 
+target_link_libraries( ${NODE_EXECUTABLE_NAME} PRIVATE -Wl,${whole_archive_flag} kafka_plugin -Wl,${no_whole_archive_flag} )
 target_link_libraries( ${NODE_EXECUTABLE_NAME} PRIVATE -Wl,${whole_archive_flag} permission_plugin -Wl,${no_whole_archive_flag} )
+target_link_libraries( ${NODE_EXECUTABLE_NAME} PRIVATE -Wl,${whole_archive_flag} info_plugin -Wl,${no_whole_archive_flag} )
 
 include(additionalPlugins)
 

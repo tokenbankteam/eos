@@ -955,7 +955,7 @@ void chain_plugin::plugin_initialize(const variables_map& options) {
             } );
 
       my->chain->add_indices();
-   } FC_LOG_AND_RETHROW()
+   } FC_LOG_AND_RETHROW();
 
 }
 
