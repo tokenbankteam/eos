@@ -117,7 +117,7 @@ std::string itoh(I n, size_t hlen = sizeof(I)<<1) {
     return r;
 }
 
-fc::variant block_info::get_block(string block_num_or_id) const {
+uint64_t block_info::get_ref_block_prefix(string block_num_or_id) const {
     signed_block_ptr block;
     optional<uint64_t> block_num;
 
@@ -140,40 +140,21 @@ fc::variant block_info::get_block(string block_num_or_id) const {
 
     EOS_ASSERT( block, unknown_block_exception, "Could not find block: ${block}", ("block", block_num_or_id));
 
-    fc::variant pretty_output;
-    abi_serializer::to_variant(*block, pretty_output, make_resolver(this, abi_serializer_max_time), abi_serializer_max_time);
-
     uint32_t ref_block_prefix = block->id()._hash[1];
 
-    return fc::mutable_variant_object(pretty_output.get_object())
-            ("id", block->id())
-            ("block_num",block->block_num())
-            ("ref_block_prefix", ref_block_prefix);
+    return ref_block_prefix;
 }
+
 
 info_apis::get_block_info_results block_info::get_block_info(const block_info::get_block_info_params&) const {
     const auto& rm = db.get_resource_limits_manager();
     return {
-            itoh(static_cast<uint32_t>(app().version())),
-            db.get_chain_id(),
-            db.head_block_num(),
-            db.last_irreversible_block_num(),
-            db.last_irreversible_block_id(),
-            db.head_block_id(),
             db.head_block_time(),
-            db.head_block_producer(),
-            rm.get_virtual_block_cpu_limit(),
-            rm.get_virtual_block_net_limit(),
-            rm.get_block_cpu_limit(),
-            rm.get_block_net_limit(),
-            //std::bitset<64>(db.get_dynamic_global_properties().recent_slots_filled).to_string(),
-            //__builtin_popcountll(db.get_dynamic_global_properties().recent_slots_filled) / 64.0,
-            app().version_string(),
             db.fork_db_pending_head_block_num(),
-            db.fork_db_pending_head_block_id(),
-            get_block(fc::to_string(db.last_irreversible_block_num())),
+            get_ref_block_prefix(fc::to_string(db.last_irreversible_block_num())),
     };
 }
+
 }
 
 fc::microseconds info_plugin::get_abi_serializer_max_time() const {

@@ -70,26 +70,9 @@ namespace info_apis {
     };
 
     struct get_block_info_results {
-        string                  server_version;
-        chain::chain_id_type    chain_id;
-        uint32_t                head_block_num = 0;
-        uint32_t                last_irreversible_block_num = 0;
-        chain::block_id_type    last_irreversible_block_id;
-        chain::block_id_type    head_block_id;
         fc::time_point          head_block_time;
-        account_name            head_block_producer;
-
-        uint64_t                virtual_block_cpu_limit = 0;
-        uint64_t                virtual_block_net_limit = 0;
-
-        uint64_t                block_cpu_limit = 0;
-        uint64_t                block_net_limit = 0;
-        //string                  recent_slots;
-        //double                  participation_rate = 0;
-        optional<string>        server_version_string;
-        optional<uint32_t>              fork_db_head_block_num;
-        optional<chain::block_id_type>  fork_db_head_block_id;
-        optional<fc::variant> last_irreversible_block;
+        uint32_t                last_irreversible_block_num = 0;
+        uint64_t                ref_block_prefix = 0;
     };
 
     class block_info {
@@ -99,7 +82,7 @@ namespace info_apis {
         block_info(const controller& db,const fc::microseconds& abi_serializer_max_time)
                 : db(db),abi_serializer_max_time(abi_serializer_max_time) {}
         using get_block_info_params = empty;
-        fc::variant get_block(string block_num_or_id) const;
+        uint64_t get_ref_block_prefix(string block_num_or_id) const;
         get_block_info_results get_block_info(const get_block_info_params&) const;
 
         friend struct resolver_factory<block_info>;
@@ -143,4 +126,4 @@ FC_REFLECT( eosio::info_apis::permission_info::get_permission_params, (account_n
 
 FC_REFLECT(eosio::info_apis::empty, )
 FC_REFLECT(eosio::info_apis::get_block_info_results,
-(server_version)(chain_id)(head_block_num)(last_irreversible_block_num)(last_irreversible_block_id)(head_block_id)(head_block_time)(head_block_producer)(virtual_block_cpu_limit)(virtual_block_net_limit)(block_cpu_limit)(block_net_limit)(server_version_string)(fork_db_head_block_num)(fork_db_head_block_id)(last_irreversible_block))
+(head_block_time)(last_irreversible_block_num)(ref_block_prefix))
